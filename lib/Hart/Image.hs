@@ -1,5 +1,6 @@
 module Hart.Image
     ( Config (..)
+    , Image (..)
     , loadImage
     ) where
 
@@ -36,10 +37,12 @@ loadImage config filePath = do
     errOrImg <- Pic.readImage filePath
     img <- either (throwIO . LoadImageException) return errOrImg
     case img of
-        Pic.ImageRGB8 x  -> return $ convert config x
-        Pic.ImageRGBA8 x -> return $ convert config $
-            Pic.pixelMap Pic.dropTransparency x
+        Pic.ImageRGB8 x  -> ok x
+        Pic.ImageRGBA8 x -> ok $ Pic.pixelMap Pic.dropTransparency x
+        Pic.ImageYCbCr8 x -> ok $ Pic.pixelMap Pic.convertPixel x
         _ -> throwIO $ LoadImageException "Unsupported image format"
+  where
+    ok = return . convert config
 
 convert
     :: Config
@@ -51,9 +54,9 @@ convert config image = Image
     , iData = VU.generate (rows * columns) $ \idx ->
         let (row, col) = idx `divMod` columns
             startX = round (fromIntegral col * cellWidth)
-            endX = round (fromIntegral (col + 1) * cellWidth)
+            endX = round (fromIntegral (col + 1) * cellWidth) - 1
             startY = round (fromIntegral row * cellHeight)
-            endY = round (fromIntegral (row + 1) * cellHeight) in
+            endY = round (fromIntegral (row + 1) * cellHeight) - 1 in
         areaBrightness (startX, endX) (startY, endY) image
     }
   where

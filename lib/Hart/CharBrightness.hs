@@ -1,17 +1,34 @@
 {-# LANGUAGE BangPatterns #-}
-module Hart.CharBrightness where
+module Hart.CharBrightness
+    ( charToBrightness
+    , brightnessToChar
+    ) where
 
 import           Data.Char           (chr, ord)
+import           Data.List           (minimumBy)
 import qualified Data.Map            as M
 import           Data.Maybe          (fromMaybe)
+import           Data.Ord            (comparing)
 import qualified Data.Vector.Unboxed as VU
 
-charBrightness :: Char -> Float
-charBrightness c
+charToBrightness :: Char -> Float
+charToBrightness c
     | x < 0 || x >= 256 = error $ "Unknown character brightness: " ++ show c
     | otherwise         = vecCorrectedBrightness `VU.unsafeIndex` x
   where
     !x = ord c
+
+brightnessToChar :: Float -> Char
+brightnessToChar f = vecBrightnessToChar VU.! (round (f * 255))
+
+-- | Reversed mapping.
+vecBrightnessToChar :: VU.Vector Char
+vecBrightnessToChar = VU.generate 256 $ \idx ->
+    let brightness = fromIntegral idx / 255 :: Float in
+    minimumBy (comparing $ distance brightness) $ M.keys correctedBrightness
+  where
+    distance :: Float -> Char -> Float
+    distance brightness c = abs (brightness - charToBrightness c)
 
 -- | For faster access
 vecCorrectedBrightness :: VU.Vector Float

@@ -3,41 +3,44 @@ module Hart.Annealing
     , test
     ) where
 
-import           System.Random (RandomGen, randomR, mkStdGen)
+import           System.Random.MWC
+import           Control.Monad.Primitive (PrimMonad, PrimState)
+import           Control.Monad (foldM)
 
 type Temp = Float
 type E = Float
 
 simulatedAnnealing
-    :: (RandomGen g)
-    => Int              -- number of steps
-    -> (a -> [a])       -- neighbour function
-    -> (a -> E)         -- energy function
-    -> g -> a -> (a, g) -- it's random
-simulatedAnnealing = simulatedAnnealingInternal acceptanceProbability linearCooling
+    :: (PrimMonad m)
+    => Gen (PrimState m)
+    -> Int        -- number of steps
+    -> (Gen (PrimState m) -> a -> m a) -- neighbour function
+    -> (a -> E)   -- energy function
+    -> a -> m a   -- it's random
+simulatedAnnealing gen = simulatedAnnealingInternal gen acceptanceProbability linearCooling
 
 simulatedAnnealingInternal
-    :: (RandomGen g)
-    => (E -> E -> Temp -> Float)
+    :: (PrimMonad m)
+    => Gen (PrimState m)
+    -> (E -> E -> Temp -> Float)
     -> (Int -> Int -> Temp)
     -> Int
-    -> (a -> [a])
+    -> (Gen (PrimState m) -> a -> m a) -- neighbour function
     -> (a -> E)
-    -> g -> a -> (a, g)
-simulatedAnnealingInternal ap temp n neigh e rg s0 = foldl (step neigh e ap) (s0, rg) (map (uncurry temp) $ zip (repeat n) [0..n])
+    -> a -> m a
+simulatedAnnealingInternal rg ap temp n neigh e s0 = foldM (step rg neigh e ap) s0 (map (uncurry temp) $ zip (repeat n) [0..n])
 
-step :: (RandomGen g)
-     => (a -> [a])                -- neighbours of given state
+step :: (PrimMonad m)
+     => Gen (PrimState m)
+     -> (Gen (PrimState m) -> a -> m a)                -- neighbours of given state
      -> (a -> E)                  -- energy function
      -> (E -> E -> Temp -> Float) -- acceptance probability
-     -> (a, g) -> Temp -> (a, g)  -- foldl
-step neigh e ap (prev, rg) temp = let neighbours = neigh prev
-                                      (i, rg') = randomR (0, length neighbours - 1) rg
-                                      next = neighbours !! i
-                                      (apv, rg'') = randomR (0.0, 1.0) rg'
-                                      next' = if ap (e prev) (e next) temp >= apv
-                                              then next else prev
-                                   in (next', rg'')
+     -> a -> Temp -> m a          -- foldM
+step rg neigh e ap prev temp = do next <- neigh rg prev
+                                  apv <- uniformR (0.0, 1.0) rg
+                                  return $ if ap (e prev) (e next) temp >= apv
+                                     then next
+                                     else prev
 
 acceptanceProbability :: E -> E -> Temp -> Float
 acceptanceProbability prev next temp = if next < prev
@@ -47,13 +50,12 @@ linearCooling :: Int -> Int -> Temp
 linearCooling a b = fromIntegral a / fromIntegral b
 
 -- Just testing stuff
-test :: Int -> Int -> Int -> Int -> Int -> Int -> (Int, [Int])
-test zig zag size steps width seed =
-    let rg = mkStdGen seed
-        list = map (\i -> (i `div` zig) + (i `mod` zag)) [0..size]
-        inrange i = i >= 0 && i < size
-        neigh i = filter inrange $ [i-width..i-1] ++ [i+1..i+width]
-        energy i = 1 / fromIntegral (list !! i)
-        solution = fst $ simulatedAnnealing steps neigh energy rg 0
-     in (solution, take 10 $ drop (solution - 5) list)
+test :: Int -> Int -> Int -> Int -> Int -> IO (Int, [Int])
+test zig zag size steps width =
+    do rg <- create
+       let list = map (\i -> (i `div` zig) + (i `mod` zag)) [0..size]
+           energy i = 1 / fromIntegral (list !! i)
+           neigh rg' i = uniformR (max 0 (width-i), min (size-1) (width+i)) rg'
+       solution <- simulatedAnnealing rg steps neigh energy 0
+       return (solution, take 10 $ drop (solution - 5) list)
 

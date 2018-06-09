@@ -43,7 +43,8 @@ Library
     JuicyPixels,
     mtl,
     haskell-names,
-    random,
+    mwc-random,
+    primitive,
     vector
 
 executable hart

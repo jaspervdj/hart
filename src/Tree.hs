@@ -30,7 +30,7 @@ main = do
           print iTree
           let ttree = toTree (C8.pack onelined) iTree
           print ttree
-          C8.putStrLn $ printTree ttree
+          C8.putStrLn $ printProgram $ Program ttree VB.empty
       -- print $ words onelined
     ParseFailed loc str -> traceShowM loc >> traceShowM str
 {-# INLINE main #-}
@@ -75,6 +75,10 @@ data Tree
     | NameLeaf Int
   deriving (Show)
 
+numTokns :: Tree -> Int
+numTokns (NameLeaf _) = 0
+numTokns (Node toks children) = length toks + sum (map numTokns children)
+
 data Program = Program Tree (VB.Vector C8.ByteString)
 
 toTree :: C8.ByteString -> IntervalTree a -> Tree
@@ -110,7 +114,8 @@ foo bs = undefined
 
 fName = "Main2.hs"
 
-
-printTree :: Tree -> C8.ByteString
-printTree (Node (label:[]) []) = showTokn label
-printTree (Node (label:labels) (child:children)) = C8.concat [showTokn label, printTree child, printTree (Node labels children)]
+printProgram :: Program -> C8.ByteString
+printProgram (Program (Node (label:[]) []) _) = showTokn label
+printProgram (Program (Node (label:labels) (child:children)) names) =
+    C8.concat [showTokn label, printProgram (Program child names), printProgram (Program (Node labels children) names)]
+printProgram (Program (NameLeaf i) names) = names VB.! i

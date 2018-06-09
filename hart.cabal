@@ -1,0 +1,70 @@
+Name:           hart
+Version:        0.1.0.0
+Description:    Please see the README on GitHub at <https://github.com/githubuser/hart#readme>
+Homepage:       https://github.com/githubuser/hart#readme
+Bug-reports:    https://github.com/githubuser/hart/issues
+Author:         Jasper Van der Jeugt, Alex Lang
+Maintainer:     m@jaspervdj.be
+Copyright:      2018 Jasper Van der jeugt, Alex Lang
+License:        BSD3
+License-file:   LICENSE
+Build-type:     Simple
+Cabal-version:  >= 1.10
+
+Extra-source-files:
+  CHANGELOG.md
+  README.md
+
+Source-repository head
+  Type: git
+  Location: https://github.com/githubuser/hart
+
+Library
+  Default-language: Haskell2010
+  Ghc-options:      -Wall
+  Hs-source-dirs:   lib
+
+  Exposed-modules:
+    Lib
+    Hart.CharBrightness
+    Hart.Image
+    Hart.Renamer
+
+  Other-modules:
+    Paths_hart
+
+  Build-depends:
+    base >=4.7 && <5,
+    containers,
+    haskell-src-exts,
+    JuicyPixels,
+    mtl,
+    vector
+
+executable hart
+  Main-is:          Main.hs
+  default-language: Haskell2010
+  Hs-source-dirs:   src
+  Ghc-options:      -threaded -rtsopts -with-rtsopts=-N
+
+  Other-modules:
+    Paths_hart
+
+  build-depends:
+    base >=4.7 && <5,
+    hart
+
+executable hart-img-test
+  Main-is:          ImgTest.hs
+  default-language: Haskell2010
+  Hs-source-dirs:   src
+  Ghc-options:      -threaded -rtsopts -with-rtsopts=-N
+
+  Other-modules:
+      Paths_hart
+
+  build-depends:
+    base >= 4.7 && < 5,
+    hart,
+    vector,
+    terminal-size

@@ -26,6 +26,7 @@ Library
 
   Exposed-modules:
     Lib
+    Hart.Annealing
     Hart.CharBrightness
     Hart.Image
     Hart.Renamer
@@ -42,6 +43,7 @@ Library
     JuicyPixels,
     mtl,
     haskell-names,
+    random,
     vector
 
 executable hart

@@ -29,13 +29,10 @@ brightnessToChar f =
 vecBrightnessToChar :: VU.Vector Char
 vecBrightnessToChar = VU.generate 256 $ \idx ->
     let brightness = fromIntegral idx / 255 :: Float in
-    minimumBy (comparing $ distance brightness) $ filter goodChar $
-        M.keys correctedBrightness
+    minimumBy (comparing $ distance brightness) $ M.keys correctedBrightness
   where
     distance :: Float -> Char -> Float
     distance brightness c = abs (brightness - charToBrightness c)
-
-    goodChar c = isAlphaNum c || c == '_'
 
 -- | For faster access
 vecCorrectedBrightness :: VU.Vector Float

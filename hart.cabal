@@ -34,12 +34,14 @@ Library
     -- Hart.Cost
     Hart.ParseModule
     Data.Data.Extended
+    Hart.Cost
 
   Other-modules:
     Paths_hart
 
   Build-depends:
     base >=4.7 && <5,
+    bytestring,
     containers,
     JuicyPixels,
     bytestring,

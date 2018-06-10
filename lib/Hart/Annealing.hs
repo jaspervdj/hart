@@ -1,5 +1,6 @@
 module Hart.Annealing
     ( simulatedAnnealing
+    , E
     , test
     ) where
 

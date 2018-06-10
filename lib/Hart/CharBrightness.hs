@@ -4,7 +4,7 @@ module Hart.CharBrightness
     , brightnessToChar
     ) where
 
-import           Data.Char           (chr, ord)
+import           Data.Char           (chr, ord, isAlphaNum)
 import           Data.List           (minimumBy)
 import qualified Data.Map            as M
 import           Data.Maybe          (fromMaybe)
@@ -20,7 +20,7 @@ charToBrightness c
 
 brightnessToChar :: Float -> Char
 brightnessToChar f =
-    let idx = round (f * 255) in
+    let idx = round ((1 - f) * 255) in
     if idx < 0 || idx > 255
         then error $ "float out of bounds: " ++ show f
         else vecBrightnessToChar VU.! idx
@@ -29,10 +29,13 @@ brightnessToChar f =
 vecBrightnessToChar :: VU.Vector Char
 vecBrightnessToChar = VU.generate 256 $ \idx ->
     let brightness = fromIntegral idx / 255 :: Float in
-    minimumBy (comparing $ distance brightness) $ M.keys correctedBrightness
+    minimumBy (comparing $ distance brightness) $ filter goodChar $
+        M.keys correctedBrightness
   where
     distance :: Float -> Char -> Float
     distance brightness c = abs (brightness - charToBrightness c)
+
+    goodChar c = isAlphaNum c || c == '_'
 
 -- | For faster access
 vecCorrectedBrightness :: VU.Vector Float

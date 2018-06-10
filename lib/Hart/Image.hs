@@ -42,7 +42,14 @@ loadImage config filePath = do
         Pic.ImageYCbCr8 x -> ok $ Pic.pixelMap Pic.convertPixel x
         _ -> throwIO $ LoadImageException "Unsupported image format"
   where
-    ok = return . convert config
+    ok = return . rescale . convert config
+
+rescale :: Image -> Image
+rescale img = img {iData = VU.map work (iData img)}
+  where
+    !high  = VU.maximum (iData img)
+    !low   = VU.minimum (iData img)
+    work x = (x - low) / (high - low)
 
 convert
     :: Config

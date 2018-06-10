@@ -19,7 +19,11 @@ charToBrightness c
     !x = ord c
 
 brightnessToChar :: Float -> Char
-brightnessToChar f = vecBrightnessToChar VU.! (round (f * 255))
+brightnessToChar f =
+    let idx = round (f * 255) in
+    if idx < 0 || idx > 255
+        then error $ "float out of bounds: " ++ show f
+        else vecBrightnessToChar VU.! idx
 
 -- | Reversed mapping.
 vecBrightnessToChar :: VU.Vector Char

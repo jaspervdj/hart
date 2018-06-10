@@ -30,6 +30,8 @@ Library
     Hart.CharBrightness
     Hart.Image
     Hart.Renamer
+    Hart.Tree
+    -- Hart.Cost
     Hart.ParseModule
     Data.Data.Extended
 
@@ -39,12 +41,14 @@ Library
   Build-depends:
     base >=4.7 && <5,
     containers,
-    haskell-src-exts,
     JuicyPixels,
-    mtl,
+    bytestring,
     haskell-names,
+    haskell-src-exts,
+    mtl,
     mwc-random,
     primitive,
+    random,
     vector
 
 executable hart

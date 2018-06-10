@@ -54,14 +54,16 @@ convert config image = Image
     , iData = VU.generate (rows * columns) $ \idx ->
         let (row, col) = idx `divMod` columns
             startX = round (fromIntegral col * cellWidth)
-            endX = round (fromIntegral (col + 1) * cellWidth) - 1
+            endX = boundw $ round (fromIntegral (col + 1) * cellWidth)
             startY = round (fromIntegral row * cellHeight)
-            endY = round (fromIntegral (row + 1) * cellHeight) - 1 in
+            endY = boundh $ round (fromIntegral (row + 1) * cellHeight) in
         areaBrightness (startX, endX) (startY, endY) image
     }
   where
     width  = Pic.imageWidth  image
     height = Pic.imageHeight image
+    boundw = min (width - 1)
+    boundh = min (height - 1)
 
     -- We might cut a little bit from the bottom of the image by doing floor
     columns = cColumns config
@@ -75,12 +77,15 @@ areaBrightness
     -> (Int, Int)
     -> Pic.Image Pic.PixelRGB8
     -> Float
-areaBrightness (startX, endX) (startY, endY) image = sum
-    [ let Pic.PixelRGB8 r g b = Pic.pixelAt image x y in
-      w2f r * 0.299 + w2f g * 0.587 + w2f b * 0.114
-    | x <- [startX .. endX]
-    , y <- [startY .. endY]
-    ] / (fromIntegral $ (endX - startX) * (endY - startY))
+areaBrightness (startX, endX) (startY, endY) image
+    | size <= 0 = 0.5
+    | otherwise = sum
+        [ let Pic.PixelRGB8 r g b = Pic.pixelAt image x y in
+          w2f r * 0.299 + w2f g * 0.587 + w2f b * 0.114
+        | x <- [startX .. endX]
+        , y <- [startY .. endY]
+        ] / fromIntegral size
   where
     w2f :: Word8 -> Float
     w2f x = fromIntegral x / 255
+    size = (endX - startX + 1) * (endY - startY + 1)
